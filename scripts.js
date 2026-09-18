@@ -1,5 +1,6 @@
-import {SPECIES,freshState,validState,startSession,remainingSeconds,settleSession,cancelSession,totalMinutes,isUnlocked} from './garden-core.js?v=7';
-import {exportBackup,importBackup,MAX_BACKUP_BYTES} from './backup.js?v=9';
+import {SPECIES,freshState,validState,startSession,remainingSeconds,settleSession,cancelSession,totalMinutes,isUnlocked} from './garden-core.js?v=11';
+import {exportBackup,importBackup,MAX_BACKUP_BYTES} from './backup.js?v=11';
+import {minutesFromPoint,dialPosition} from './duration-dial.js?v=11';
 const $=id=>document.getElementById(id),KEY='mygarden.v1';
 let state=freshState(),selectedPlot=0,page=0,toastTimeout,installPrompt,audio=null,audioPlaying=false;
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>$('toast').hidden=true,5000);}
@@ -8,6 +9,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(state));return true;
 const speciesOf=id=>SPECIES.find(s=>s.id===id)||SPECIES[0];
 function view(name){$('focus-view').hidden=name!=='focus';$('garden-view').hidden=name!=='garden';for(const n of ['focus','garden']){const tab=$(n+'-tab');tab.classList.toggle('active',n===name);if(n===name)tab.setAttribute('aria-current','page');else tab.removeAttribute('aria-current');}render();}
 function render(){
+ if(!state.session)state.duration=Math.min(60,state.duration);
  const session=state.session,sp=speciesOf(session?.species||state.selectedSpecies),seconds=session?remainingSeconds(session):state.duration*60;
  $('timer').textContent=format(seconds);
  const progress=session?Math.max(0,Math.min(1,1-seconds/(session.minutes*60))):1;
@@ -16,7 +18,7 @@ function render(){
  $('focus-label').textContent=session?'MỘT MẦM SỐNG ĐANG LỚN LÊN':'DÀNH MỘT CHÚT THỜI GIAN CHO BẠN';
  $('message').textContent=session?'Cứ chậm rãi. Thời gian này là của bạn.':'Đặt điện thoại xuống. Để khu vườn lớn lên.';
  $('action').textContent=session?'Kết thúc sớm':'Bắt đầu '+sp.verb+'  ↗';$('action').classList.toggle('running',!!session);$('setup').hidden=!!session;
- $('choose-species').textContent=sp.icon+' '+sp.name+'  ⌄';$('duration').value=state.duration;
+ $('choose-species').textContent=sp.icon+' '+sp.name+'  ⌄';updateDial();
  const occupied=state.plots.filter(Boolean);$('garden-count').textContent=occupied.length+' / '+state.plots.length;
  $('stat-plants').textContent=occupied.length;$('stat-sessions').textContent=occupied.length;$('stat-minutes').textContent=occupied.reduce((sum,p)=>sum+p.minutes,0);
  page=Math.max(0,Math.min(page,state.plots.length/16-1));$('page-label').textContent='Khu '+(page+1)+' / '+state.plots.length/16;$('prev').disabled=page===0;$('next').disabled=page===state.plots.length/16-1;
@@ -30,10 +32,39 @@ function sync(){try{const saved=localStorage.getItem(KEY);if(saved)state=validSt
 window.addEventListener('storage',e=>{if(e.key===KEY){sync();if(!state.session)stopSound();}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync();});window.addEventListener('pageshow',sync);
 async function mutate(fn){const run=()=>{sync();fn();};if(navigator.locks)await navigator.locks.request('mygarden-state',run);else run();}
- $('action').addEventListener('click',()=>{const minutes=Number($('duration').value);mutate(()=>{if(state.session){$('cancel-dialog').showModal();return;}if(!Number.isInteger(minutes)||minutes<1||minutes>180){toast('Chọn thời lượng từ 1 đến 180 phút.');return;}state.duration=minutes;if(state.plots[selectedPlot])selectedPlot=state.plots.findIndex(p=>!p);if(startSession(state,selectedPlot,state.selectedSpecies,minutes)){save();render();}});});
+ $('action').addEventListener('click',()=>{const minutes=state.duration;mutate(()=>{if(state.session){$('cancel-dialog').showModal();return;}if(!Number.isInteger(minutes)||minutes<1||minutes>60){toast('Xoay vòng để chọn từ 1 đến 60 phút.');return;}state.duration=minutes;if(state.plots[selectedPlot])selectedPlot=state.plots.findIndex(p=>!p);if(startSession(state,selectedPlot,state.selectedSpecies,minutes)){save();render();}});});
  $('confirm-cancel').addEventListener('click',()=>mutate(()=>{cancelSession(state);save();stopSound();$('cancel-dialog').close();render();toast('Ô đất vẫn còn trống. Khi sẵn sàng, hãy thử lại.');}));
  $('keep-focus').addEventListener('click',()=>$('cancel-dialog').close());
- $('duration').addEventListener('change',()=>{const n=Number($('duration').value);if(Number.isInteger(n)&&n>=1&&n<=180){state.duration=n;save();render();}else{toast('Chọn thời lượng từ 1 đến 180 phút.');$('duration').value=state.duration;}});
+function updateDial(){
+ const dial=$('duration-dial'),minutes=Math.min(60,state.session?.minutes??state.duration),position=dialPosition(minutes);
+ dial.setAttribute('aria-valuenow',minutes);dial.setAttribute('aria-valuetext',minutes+' phút');dial.setAttribute('aria-disabled',String(!!state.session));dial.tabIndex=state.session?-1:0;
+ $('dial-handle').style.left=position.x+'%';$('dial-handle').style.top=position.y+'%';
+ $('dial-progress').style.strokeDasharray=minutes+' 60';
+ $('action').disabled=!state.session&&state.duration===0;
+ if(!state.session)$('timer').textContent=format(state.duration*60);
+}
+function chooseMinutes(minutes){if(state.session)return;state.duration=minutes;updateDial();save();}
+let dialPointer=null;
+const dial=$('duration-dial');
+function dragDial(event){
+ if(state.session)return;
+ const r=dial.getBoundingClientRect();chooseMinutes(minutesFromPoint(event.clientX,event.clientY,r.left+r.width/2,r.top+r.height/2));
+}
+dial.addEventListener('pointerdown',event=>{
+ if(state.session||!event.isPrimary||event.button!==0)return;
+ const r=dial.getBoundingClientRect(),distance=Math.hypot(event.clientX-r.left-r.width/2,event.clientY-r.top-r.height/2);
+ if(distance<r.width*.31)return;
+ event.preventDefault();dialPointer=event.pointerId;dial.setPointerCapture(event.pointerId);dial.focus();dragDial(event);
+});
+dial.addEventListener('pointermove',event=>{if(event.pointerId===dialPointer)dragDial(event);});
+function endDial(event){if(event.pointerId===dialPointer){dialPointer=null;if(dial.hasPointerCapture(event.pointerId))dial.releasePointerCapture(event.pointerId);}}
+dial.addEventListener('pointerup',endDial);dial.addEventListener('pointercancel',endDial);dial.addEventListener('lostpointercapture',()=>dialPointer=null);
+dial.addEventListener('keydown',event=>{
+ if(state.session)return;
+ const steps={ArrowRight:1,ArrowUp:1,ArrowLeft:-1,ArrowDown:-1,PageUp:5,PageDown:-5};
+ let minutes;if(event.key==='Home')minutes=0;else if(event.key==='End')minutes=60;else if(event.key in steps)minutes=Math.max(0,Math.min(60,state.duration+steps[event.key]));else return;
+ event.preventDefault();chooseMinutes(minutes);
+});
  $('choose-species').addEventListener('click',()=>{
   const minutes=totalMinutes(state),next=SPECIES.find(s=>(s.unlockMinutes||0)>minutes);
   $('unlock-progress').textContent=next?'Đã tập trung '+Math.floor(minutes/60)+' giờ '+(minutes%60)+' phút · Còn '+(next.unlockMinutes-minutes)+' phút để mở khóa 3 sinh vật mới.':'Bạn đã mở khóa toàn bộ bộ sưu tập!';

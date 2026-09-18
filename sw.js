@@ -1,5 +1,5 @@
-const CACHE='mygarden-v10';
-const ASSETS=['./','./index.html','./styles.css?v=9','./scripts.js?v=10','./backup.js?v=9','./garden-core.js?v=7','./manifest.webmanifest','./icons/icon.svg','./icons/icon-192.png','./icons/icon-512.png','./icons/icon-maskable-512.png','./sound/liecio-calming-rain.mp3','./sound/alex_jauk-calm-zen-river-flowing-228223.mp3','./sound/focus.mp3'];
+const CACHE='mygarden-v13';
+const ASSETS=['./','./index.html','./styles.css?v=13','./scripts.js?v=11','./backup.js?v=11','./duration-dial.js?v=11','./garden-core.js?v=11','./manifest.webmanifest','./icons/icon.svg','./icons/icon-192.png','./icons/icon-512.png','./icons/icon-maskable-512.png','./sound/liecio-calming-rain.mp3','./sound/alex_jauk-calm-zen-river-flowing-228223.mp3','./sound/focus.mp3'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS).then(()=>self.skipWaiting()))));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('mygarden-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{

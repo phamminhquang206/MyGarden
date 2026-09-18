@@ -16,3 +16,6 @@ test('empty garden is a valid backup and oversized files are rejected',()=>{
  assert.deepEqual(importBackup(exportBackup(freshState())).state,freshState());
  assert.throws(()=>importBackup(' '.repeat(5*1024*1024+1)),/quá lớn/);
 });
+test('zero dial selection survives backup without creating a session',()=>{
+ const s=freshState();s.duration=0;const restored=importBackup(exportBackup(s)).state;assert.equal(restored.duration,0);assert.equal(restored.session,null);
+});

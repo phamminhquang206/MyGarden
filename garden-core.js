@@ -13,7 +13,7 @@ export function validState(v){
  if(!v||v.version!==1||!Array.isArray(v.plots)||v.plots.length<16||v.plots.length%16)return freshState();
  const b=freshState();b.plots=v.plots.map(p=>p&&SPECIES.some(s=>s.id===p.species)&&Number.isFinite(p.minutes)&&p.minutes>0?{species:p.species,minutes:p.minutes,completedAt:Number(p.completedAt)||0,id:String(p.id||'legacy')}:null);
  if(SPECIES.some(s=>s.id===v.selectedSpecies))b.selectedSpecies=v.selectedSpecies;
- if(Number.isInteger(v.duration)&&v.duration>=1&&v.duration<=180)b.duration=v.duration;
+ if(Number.isInteger(v.duration)&&v.duration>=0&&v.duration<=180)b.duration=v.duration;
  if(['rain','stream','ambient'].includes(v.sound))b.sound=v.sound;
  if(Number.isFinite(v.volume))b.volume=Math.max(0,Math.min(100,v.volume));
  const s=v.session;if(s&&typeof s.id==='string'&&SPECIES.some(x=>x.id===s.species)&&Number.isInteger(s.plot)&&s.plot>=0&&s.plot<b.plots.length&&!b.plots[s.plot]&&Number.isFinite(s.startedAt)&&Number.isInteger(s.minutes)&&s.minutes>=1&&s.minutes<=180&&s.endsAt===s.startedAt+s.minutes*60000)b.session={...s};

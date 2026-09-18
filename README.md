@@ -2,6 +2,8 @@
 
 PWA tập trung với vườn 4×4, cây/hoa/động vật, mở rộng từng 16 ô và âm thanh MP3 trong thư mục sound. Không cần cài dependency.
 
+Giao diện responsive cho điện thoại, tablet và máy tính, không còn giới hạn vào màn vuông 720×720. Trên màn hình thấp hoặc khi xoay ngang, trang có thể cuộn để mọi điều khiển vẫn sử dụng được. Vòng thời lượng, nền tròn và mốc kéo dùng chung tâm và bán kính.
+
 Ban đầu có 6 sinh vật. Mỗi 300 phút tập trung hoàn thành mở thêm 3 sinh vật (cây, hoa, thú), tại các mốc 5/10/15/20 giờ, tổng cộng 18 loại. Thời gian phiên đang chạy hoặc hủy sớm không được tính. Bộ chọn hiển thị mốc khóa và thời gian còn lại. Dữ liệu vườn cũ được giữ nguyên.
 
 Âm thanh dùng ba bản MP3 do người dùng cung cấp: liecio-calming-rain.mp3 (mưa), alex_jauk-calm-zen-river-flowing-228223.mp3 (suối), focus.mp3 (tập trung). Hỗ trợ lặp lại, đổi bản, âm lượng và tự dừng khi phiên kết thúc. PWA lưu cả ba bản, khoảng 6,6 MB, để dùng ngoại tuyến sau lần tải đầu.
@@ -21,6 +23,8 @@ Mở http://localhost:4173. Kiểm tra bằng `npm test`.
 HTTP qua địa chỉ IP nội bộ chỉ dùng xem giao diện; PWA cần HTTPS hoặc localhost. Không khóa hướng màn hình.
 
 ## Dữ liệu và thời gian
+
+Chọn thời lượng bằng vòng quanh cây: góc dưới trái 0 phút, phía trên 30 phút, góc dưới phải 60 phút. Kéo hoặc chạm vòng; phím mũi tên thay đổi 1 phút, Page Up/Down thay đổi 5 phút, Home/End chọn 0/60. Mốc 0 không thể bắt đầu phiên. Vòng khóa trong phiên. Phiên cũ dài hơn 60 phút vẫn tiếp tục; thời lượng cho phiên mới giới hạn 60 phút. Khi deploy, upload thêm duration-dial.js.
 
 Trong **Khu vườn → Dữ liệu**, chọn **Xuất dữ liệu JSON** để tải file sao lưu. Trên website hoặc thiết bị mới, mở cùng mục, chọn **Nhập dữ liệu JSON**, xem thông tin và xác nhận thay thế. File giữ cây, thời gian hoàn thành, tiến trình mở khóa, thiết lập và phiên đang chạy. Phiên không tạm dừng khi chuyển thiết bị; nếu đã hết giờ, sẽ được hoàn thành sau khi nhập.
 
