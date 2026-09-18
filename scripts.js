@@ -54,17 +54,19 @@ dial.addEventListener('pointerdown',event=>{
  if(state.session||!event.isPrimary||event.button!==0)return;
  const r=dial.getBoundingClientRect(),distance=Math.hypot(event.clientX-r.left-r.width/2,event.clientY-r.top-r.height/2);
  if(distance<r.width*.31)return;
- event.preventDefault();dialPointer=event.pointerId;dial.setPointerCapture(event.pointerId);dial.focus();dragDial(event);
+ event.preventDefault();dialPointer=event.pointerId;dial.setPointerCapture(event.pointerId);dial.dataset.pointerFocus='true';dial.focus({preventScroll:true});dragDial(event);
 });
 dial.addEventListener('pointermove',event=>{if(event.pointerId===dialPointer)dragDial(event);});
 function endDial(event){if(event.pointerId===dialPointer){dialPointer=null;if(dial.hasPointerCapture(event.pointerId))dial.releasePointerCapture(event.pointerId);}}
 dial.addEventListener('pointerup',endDial);dial.addEventListener('pointercancel',endDial);dial.addEventListener('lostpointercapture',()=>dialPointer=null);
 dial.addEventListener('keydown',event=>{
+ delete dial.dataset.pointerFocus;
  if(state.session)return;
  const steps={ArrowRight:1,ArrowUp:1,ArrowLeft:-1,ArrowDown:-1,PageUp:5,PageDown:-5};
  let minutes;if(event.key==='Home')minutes=0;else if(event.key==='End')minutes=60;else if(event.key in steps)minutes=Math.max(0,Math.min(60,state.duration+steps[event.key]));else return;
  event.preventDefault();chooseMinutes(minutes);
 });
+dial.addEventListener('blur',()=>delete dial.dataset.pointerFocus);
  $('choose-species').addEventListener('click',()=>{
   const minutes=totalMinutes(state),next=SPECIES.find(s=>(s.unlockMinutes||0)>minutes);
   $('unlock-progress').textContent=next?'Đã tập trung '+Math.floor(minutes/60)+' giờ '+(minutes%60)+' phút · Còn '+(next.unlockMinutes-minutes)+' phút để mở khóa 3 sinh vật mới.':'Bạn đã mở khóa toàn bộ bộ sưu tập!';

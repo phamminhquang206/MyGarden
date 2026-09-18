@@ -41,3 +41,4 @@ dialog::backdrop{background:#123b34a8;backdrop-filter:blur(4px)}dialog h2{font-s
 @media(max-width:380px){.app{padding-inline:14px}.brand{font-size:20px}#tagline{font-size:9px;padding:7px 8px}.garden-tools{flex-direction:column;gap:5px}.garden-heading .eyebrow{font-size:8px;letter-spacing:1px}.sound{gap:7px}.sound input{width:60px}nav button{padding-inline:18px}}
 @media(max-height:650px){.view{padding-top:18px;gap:8px}.scene{--scene-size:200px}#timer{font-size:52px}.garden-land{width:min(100%,360px)}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+#duration-dial[data-pointer-focus=true]:focus-visible{outline:none}
